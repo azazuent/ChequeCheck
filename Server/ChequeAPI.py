@@ -1,9 +1,10 @@
+import os
+
 import requests
 import cv2
-import json
 
-api_url = 'https://proverkacheka.com/api/v1/check/get'
-token = {'token': '26161.p2739hUKJxksGx09Q'}
+api_url = os.getenv("cheque_api_url")
+api_token = os.getenv("cheque_api_token")
 
 
 class QrCodeNotDetectedException(Exception):
@@ -11,7 +12,7 @@ class QrCodeNotDetectedException(Exception):
         super().__init__("No QR-code detected")
 
 
-def get_cheque_info_by_qr(qrcode):
+def get_cheque_info_by_qr(qrcode) -> str:
     qcd = cv2.QRCodeDetector()
 
     retval, qrraw, points, straight_qrcode = \
@@ -20,10 +21,8 @@ def get_cheque_info_by_qr(qrcode):
     if not retval:
         raise QrCodeNotDetectedException
 
-    data = token | {'qrraw': qrraw}
+    data = {'token': api_token, 'qrraw': qrraw}
 
-    r = requests.post(url=api_url, data=data)
+    request = requests.post(url=api_url, data=data)
 
-    d = json.loads(r.text)
-
-    return d
+    return request.text
