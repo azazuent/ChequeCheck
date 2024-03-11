@@ -1,25 +1,16 @@
-import os
+from dotenv import load_dotenv
+load_dotenv()
 
-import MySQLdb
 import cv2
 from flask import Flask, request, jsonify
 import numpy as np
 import json
-from dotenv import load_dotenv
-from ChequeAPI import get_cheque_info_by_qr, QrCodeNotDetectedException
-import SQLQueries
+from ChequeAPI import get_cheque_info_by_qr, QrCodeNotDetectedException, RickrollException
+import DatabaseAPI
 
 load_dotenv()
 
 app = Flask(__name__)
-
-app.config['MYSQL_HOST'] = os.getenv("mysql_host")
-app.config['MYSQL_PORT'] = int(os.getenv("mysql_port"))
-app.config['MYSQL_USER'] = os.getenv("mysql_user")
-app.config['MYSQL_PASSWORD'] = os.getenv("mysql_password")
-app.config['MYSQL_DB'] = os.getenv("mysql_db")
-
-SQLQueries.init_app(app)
 
 
 class RequestError(Exception):
@@ -40,10 +31,10 @@ def submit_cheque():
     }
 
     try:
-        user_id = SQLQueries.get_user_id_by_telegram_id(user_telegram_id)
+        user_id = DatabaseAPI.get_user_id_by_telegram_id(user_telegram_id)
 
         if user_id is None:
-            raise RequestError("User is not registered")
+            raise RequestError("Пользователь не зарегистрирован")
 
         cheque_raw = request.files['cheque_photo'].read()
         cheque_np_array = np.frombuffer(cheque_raw, np.uint8)
@@ -52,30 +43,33 @@ def submit_cheque():
         try:
             cheque_json = get_cheque_info_by_qr(cheque_qr)
             cheque_info = json.loads(cheque_json)
+            print(cheque_json)
             code = cheque_info["code"]
-            if code == 0:
-                raise RequestError("Incorrect cheque")
-            elif code == 3:
-                raise RequestError("API issue - contact developer")
+            if code == 0 or code == 3:
+                raise RequestError("Некорректный QR-код")
 
         except RequestError:
             raise
         except QrCodeNotDetectedException:
-            raise RequestError("QR-code not detected")
+            raise RequestError("QR-код не обнаружен, попробуйте еще раз")
+        except RickrollException as err:
+            response["data"] = {
+                "code": 666,
+                "error": str(err)
+            }
+            return jsonify(response)
 
-        cheque_request_number = cheque_info["data"]["json"]["requestNumber"]
+        cheque_fiscal_sign = cheque_info["request"]["manual"]["fp"]
 
         try:
-            SQLQueries.insert_cheque(cheque_request_number, cheque_json, user_id)
-        except MySQLdb.IntegrityError:
-            raise RequestError("Cheque has already been submitted")
-
-        cheque_id = SQLQueries.get_cheque_id_by_request_number(cheque_request_number)
+            cheque_id = DatabaseAPI.insert_cheque(cheque_fiscal_sign, cheque_json, user_id)
+        except DatabaseAPI.DuplicateEntryError:
+            raise RequestError("Чек уже был просканирован")
 
         response["data"] = {
             "code": 0,
             "cheque_id": cheque_id,
-            "cheque_request_number": cheque_request_number
+            "cheque_fiscal_sign": cheque_fiscal_sign
         }
 
     except RequestError as err:
@@ -89,8 +83,8 @@ def submit_cheque():
 
 @app.route("/register", methods=["POST"])
 def register():
-    user_telegram_id = str(request.args.get("user_telegram_id"))
-    user_name = str(request.args.get("user_name"))
+    user_telegram_id = request.args.get("user_telegram_id")
+    user_name = request.args.get("user_name")
 
     response = {
         "request": {
@@ -102,11 +96,9 @@ def register():
 
     try:
         try:
-            SQLQueries.insert_user(user_telegram_id, user_name)
-        except MySQLdb.IntegrityError:
-            raise RequestError("User is already registered")
-
-        user_id = SQLQueries.get_user_id_by_telegram_id(user_telegram_id)
+            user_id = DatabaseAPI.insert_user(user_telegram_id, user_name)
+        except DatabaseAPI.DuplicateEntryError:
+            raise RequestError("Пользователь уже зарегистрирован")
 
         response["data"] = {
             "code": 0,
@@ -124,13 +116,25 @@ def register():
 
 @app.route("/user_list", methods=["GET"])
 def get_user_list():
-    user_list = SQLQueries.get_user_list()
-    return jsonify(user_list)
+    response = {
+        "request": {
+            "action": "/user_list"
+        }
+    }
+
+    user_list = DatabaseAPI.get_user_list()
+
+    response["data"] = {
+        "code": 0,
+        "user_list": user_list
+    }
+
+    return jsonify(response)
 
 
 @app.route("/cheque_amount", methods=["GET"])
 def get_cheque_amount():
-    user_telegram_id = str(request.args.get("user_telegram_id"))
+    user_telegram_id = request.args.get("user_telegram_id")
 
     response = {
         "request": {
@@ -140,12 +144,12 @@ def get_cheque_amount():
     }
 
     try:
-        user_id = SQLQueries.get_user_id_by_telegram_id(user_telegram_id)
+        user_id = DatabaseAPI.get_user_id_by_telegram_id(user_telegram_id)
 
         if user_id is None:
-            raise RequestError("User is not registered")
+            raise RequestError("Пользователь не зарегистрирован")
 
-        cheque_amount = SQLQueries.get_cheque_amount_by_user_id(user_id)
+        cheque_amount = DatabaseAPI.get_cheque_amount_by_user_id(user_id)
 
         response["data"] = {
             "code": 0,
@@ -156,5 +160,56 @@ def get_cheque_amount():
             "code": -1,
             "error": str(err)
         }
+
+    return jsonify(response)
+
+
+@app.route("/cheques", methods=["GET"])
+def cheques():
+    user_telegram_id = request.args.get("user_telegram_id")
+
+    response = {
+        "request": {
+            "action": "/cheques",
+            "user_telegram_id": user_telegram_id
+        }
+    }
+
+    try:
+        user_id = DatabaseAPI.get_user_id_by_telegram_id(user_telegram_id)
+
+        if user_id is None:
+            raise RequestError("Пользователь не зарегистрирован")
+
+        cheque_list = DatabaseAPI.get_cheques_by_user_id(user_id)
+
+        response["data"] = {
+            "code": 0,
+            "cheques": cheque_list
+        }
+
+    except RequestError as err:
+        response["data"] = {
+            "code": -1,
+            "error": str(err)
+        }
+
+    return jsonify(response)
+
+
+@app.route("/leaderboard", methods=["GET"])
+def get_leaderboard():
+    response = {
+        "request": {
+            "action": "/leaderboard"
+        }
+    }
+
+    leaderboard = DatabaseAPI.get_leaderboard()
+
+    response["data"] = {
+        "code": 0,
+        "leaderboard": leaderboard
+    }
 
     return jsonify(response)

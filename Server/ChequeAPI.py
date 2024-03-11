@@ -1,7 +1,6 @@
 import os
-
 import requests
-import cv2
+from qreader import QReader
 
 api_url = os.getenv("cheque_api_url")
 api_token = os.getenv("cheque_api_token")
@@ -12,17 +11,25 @@ class QrCodeNotDetectedException(Exception):
         super().__init__("No QR-code detected")
 
 
+class RickrollException(Exception):
+    def __init__(self):
+        super().__init__("RICKROLL DETECTED")
+
+
 def get_cheque_info_by_qr(qrcode) -> str:
-    qcd = cv2.QRCodeDetector()
+    qreader = QReader()
 
-    retval, qrraw, points, straight_qrcode = \
-        qcd.detectAndDecodeMulti(qrcode)
+    qrraw = qreader.detect_and_decode(qrcode)
 
-    if not retval:
+    if not qrraw:
         raise QrCodeNotDetectedException
+
+    if qrraw[0] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
+        print("RICKROLL DETECTED")
+        raise RickrollException
 
     data = {'token': api_token, 'qrraw': qrraw}
 
-    request = requests.post(url=api_url, data=data)
+    response = requests.post(url=api_url, data=data)
 
-    return request.text
+    return response.text

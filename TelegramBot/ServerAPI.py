@@ -1,10 +1,8 @@
 import os
 import requests
-from dotenv import load_dotenv
-
-load_dotenv()
 
 server_api_url = os.getenv("server_api_url")
+
 
 def register(user_telegram_id: str, user_name: str) -> dict:
     request = requests.post(url=server_api_url + f"register?"
@@ -32,7 +30,19 @@ def get_user_list() -> dict:
     return response
 
 
+def get_leaderboard() -> dict:
+    request = requests.get(url=server_api_url + "leaderboard")
+    response = request.json()
+    return response
+
+
 def get_cheque_amount(user_telegram_id: str) -> dict:
     request = requests.get(url=server_api_url + f"cheque_amount?user_telegram_id={user_telegram_id}")
+    response = request.json()
+    return response
+
+
+def get_cheques(user_telegram_id: str) -> dict:
+    request = requests.get(url=server_api_url + f"cheques?user_telegram_id={user_telegram_id}")
     response = request.json()
     return response
