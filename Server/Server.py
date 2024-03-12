@@ -43,10 +43,12 @@ def submit_cheque():
         try:
             cheque_json = get_cheque_info_by_qr(cheque_qr)
             cheque_info = json.loads(cheque_json)
-            print(cheque_json)
+            print(cheque_info)
             code = cheque_info["code"]
             if code == 0 or code == 3:
                 raise RequestError("Некорректный QR-код")
+            if code == 5:
+                raise RequestError("Информация по чеку еще не доступна, попробуйте позже")
 
         except RequestError:
             raise
@@ -213,3 +215,11 @@ def get_leaderboard():
     }
 
     return jsonify(response)
+
+
+def main():
+    app.run(debug=True)
+
+
+if __name__ == "__main__":
+    main()

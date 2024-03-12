@@ -87,13 +87,14 @@ def get_cheques(message):
     if response["data"]["code"] == 0:
         cheques = response["data"]["cheques"]
         cheque_infos = []
+        print(cheques)
 
         for cheque in cheques:
             date, time = cheque["data"]["json"]["dateTime"].split('T')
             total_sum = str(cheque["data"]["json"]["totalSum"])
-            provider = cheque["data"]["json"]["user"]
+            retail_place = cheque["data"]["json"]["retailPlace"]
 
-            cheque_info = f"{date} в {time}\nвы совершили покупку у {provider}\n" \
+            cheque_info = f"{date} в {time}\nвы совершили покупку в {retail_place}\n" \
                           f"на сумму {total_sum[:-2]}.{total_sum[-2:]} руб"
             cheque_infos.append(cheque_info)
 
@@ -127,4 +128,9 @@ def submit_cheque(message):
     bot.reply_to(message, reply)
 
 
-bot.infinity_polling()
+def main():
+    bot.infinity_polling()
+
+
+if __name__ == "__main__":
+    main()
