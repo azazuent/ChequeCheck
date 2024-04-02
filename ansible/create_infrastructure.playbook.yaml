@@ -1,0 +1,97 @@
+- name: Run local terraform
+  hosts: localhost
+  tasks:
+    - name: Run terraform
+      terraform:
+        project_path: "~/terraform-data"
+        force_init: yes
+        state: present
+      register: trfrm
+
+    - name: Add tg host
+      add_host:
+        name: tgbot_server
+        groups: nodes
+        ansible_host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+        ansible_ssh_private_key_file: ~/.ssh/id_rsa
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+    - name: Add db host
+      add_host:
+        name: db_server
+        groups: nodes
+        ansible_host: "{{ trfrm.outputs.servers.value.db_server_ip4}}"
+        ansible_ssh_private_key_file: ~/.ssh/id_rsa
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+    - name: Add api host
+      add_host:
+        name: api_server
+        groups: nodes
+        ansible_host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+        ansible_ssh_private_key_file: ~/.ssh/id_rsa
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+- name: Get secrets from vault
+  hosts: localhost
+
+  tasks:
+    - name: Get db secrets from vault
+      community.hashi_vault.vault_kv2_get:
+        url: "http://localhost:8200"
+        path: database
+      register: database_secrets
+
+    - name: Get bot secrets from vault
+      community.hashi_vault.vault_kv2_get:
+        url: "http://localhost:8200"
+        path: tgbot
+      register: tgbot_secrets
+
+    - name: Get api secrets from vault
+      community.hashi_vault.vault_kv2_get:
+        url: "http://localhost:8200"
+        path: api
+      register: api_secrets
+
+- name: Wait out the timeout for creating instances
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Wait for db port 22
+      wait_for:
+        host: "{{ trfrm.outputs.servers.value.db_server_ip4}}"
+        port: 22
+
+    - name: Wait for tgbot port 22
+      wait_for:
+        host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+        port: 22
+
+    - name: Wait for api port 22
+      wait_for:
+        host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+        port: 22
+
+- name: Configure database host
+  hosts: db_server
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install PostgreSQL
+      apt:
+        name: postgresql
+        state: present
+
+    - name: Configure PostgreSQL
+      ansible.builtin.template:
+        src: ./templates/postgresql.conf
+        dest: /etc/postgresql/14/main/postgresql.conf
+        owner: postgres
+        group: postgres
+        mode: 0644
+
