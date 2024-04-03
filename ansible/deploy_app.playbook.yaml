@@ -167,11 +167,12 @@
       apt:
         update_cache: yes
 
-    - name: Install python
+    - name: Install python and pip
       become: yes
       apt:
         name:
           - python3
+          - python3-pip
         state: present
 
     - name: Copy api distrib to api host
