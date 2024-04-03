@@ -1,5 +1,5 @@
-from dotenv import load_dotenv
-load_dotenv()
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv())
 
 import cv2
 from flask import Flask, request, jsonify
@@ -8,7 +8,7 @@ import json
 from ChequeAPI import get_cheque_info_by_qr, QrCodeNotDetectedException, RickrollException
 import DatabaseAPI
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 app = Flask(__name__)
 
