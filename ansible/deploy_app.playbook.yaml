@@ -175,7 +175,7 @@
 
     - name: Copy api distrib to api host
       ansible.builtin.copy:
-        src: ./server_dist
+        src: ../server_dist
         dest: ~/
 #- name: Wait for api port 22
 #  wait_for:
