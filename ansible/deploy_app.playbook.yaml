@@ -141,12 +141,12 @@
   hosts: localhost
   connection: local
 
-    - name: Wait for tgbot port 22
-      wait_for:
-        host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
-        port: 22
+- name: Wait for tgbot port 22
+  wait_for:
+    host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+    port: 22
 
-    - name: Wait for api port 22
-      wait_for:
-        host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
-        port: 22
+- name: Wait for api port 22
+  wait_for:
+    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+    port: 22
