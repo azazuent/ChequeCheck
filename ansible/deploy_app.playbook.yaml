@@ -53,6 +53,13 @@
         path: database
       register: database
 
+- name: Install psycopg on main host
+  hosts: localhost
+  tasks:
+    apt:
+      update_cache: yes
+      name: python3-psycopg2
+
 - name: Wait out the timeout for creating db instance
   hosts: localhost
   connection: local
