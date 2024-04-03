@@ -167,12 +167,13 @@
       apt:
         update_cache: yes
 
-    - name: Install python+pip & libgl
+    - name: Install python+pip+venv & libgl
       become: yes
       apt:
         name:
           - python3
           - python3-pip
+          - python3.10-venv
           - libgl1-mesa-glx
         state: present
 
@@ -181,14 +182,11 @@
         src: ../server_dist
         dest: ~/
 
-    - name: Install veirtualenv module
-      ansible.builtin.pip:
-        name: python3-virtualenv
-
     - name: Install requirements
       ansible.builtin.pip:
         chdir: ~
         virtualenv: ./server_venv/
+        virtualenv_command: "-m venv server_venv"
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
