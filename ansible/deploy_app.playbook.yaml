@@ -161,13 +161,14 @@
 
 - name: Configure api host
   hosts: api_server
-  become: yes
   tasks:
     - name: Update apt package cache
+      become: yes
       apt:
         update_cache: yes
 
     - name: Install python
+      become: yes
       apt:
         name:
           - python3
@@ -177,6 +178,12 @@
       ansible.builtin.copy:
         src: ../server_dist
         dest: ~/
+
+    - name: Install python libs
+      ansible.builtin.pip:
+        chdir: server_dist
+        requirements: ./requirements.txt
+        name: ./*.whl
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
