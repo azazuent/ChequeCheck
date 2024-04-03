@@ -149,11 +149,34 @@
         state: restore
 
 
-#- name: Wait for tgbot port 22
-#  wait_for:
-#    host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
-#    port: 22
 
+- name: Wait out the timeout for creating api instance
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Wait for api port 22
+    wait_for:
+      host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+      port: 22
+
+- name: Configure api host
+  hosts: api_server
+  become: yes
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install python
+      apt:
+        name:
+          - python3
+        state: present
+
+    - name: Copy api distrib to api host
+      ansible.builtin.copy:
+        src: ./server_dist
+        dest: ~/
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
