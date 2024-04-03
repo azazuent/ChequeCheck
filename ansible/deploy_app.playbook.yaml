@@ -211,10 +211,10 @@
         group: root
         mode: 0644
 
-    - name: Add dotenv file to working directory
+    - name: Add dotenv file to user directory
       ansible.builtin.template:
         src: ./templates/server.env
-        dest: ~/server_dist/.env
+        dest: ~/.env
         owner: ubuntu
         group: ubuntu
         mode: 0644
