@@ -186,7 +186,7 @@
       ansible.builtin.pip:
         chdir: ~
         virtualenv: ./server_venv/
-        virtualenv_command: "-m venv server_venv"
+        virtualenv_command: venv
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
