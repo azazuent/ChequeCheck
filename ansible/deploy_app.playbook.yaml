@@ -128,25 +128,22 @@
         privs: all
       become: yes
 
-- name: Fill db from backup
-  hosts: localhost
-  community.postgresql_query:
-    login_host: "{{ trfrm.outputs.servers.value.database_server_ip4 }}"
-    db: "{{ db_name }}"
-    login_user: "{{ db_user }}"
-    login_password: "{{ db_password }}"
-    path_to_script: "../database_data/cheque_db.psql"
+    - name: Fill db from backup
+      hosts: localhost
+      community.postgresql_query:
+        login_host: "{{ trfrm.outputs.servers.value.database_server_ip4 }}"
+        db: "{{ db_name }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        path_to_script: "../database_data/cheque_db.psql"
 
-- name: Wait out the timeout for creating instances
-  hosts: localhost
-  connection: local
 
-- name: Wait for tgbot port 22
-  wait_for:
-    host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
-    port: 22
+#- name: Wait for tgbot port 22
+#  wait_for:
+#    host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+#    port: 22
 
-- name: Wait for api port 22
-  wait_for:
-    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
-    port: 22
+#- name: Wait for api port 22
+#  wait_for:
+#    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+#    port: 22
