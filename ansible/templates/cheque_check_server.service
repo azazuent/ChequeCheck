@@ -1,0 +1,10 @@
+[Unit]
+Description="Cheque Check api server service"
+
+[Service]
+ExecStart=/home/ubuntu/server_venv/bin/cheque_check_server
+User=ubuntu
+WorkingDirectory=/home/ubuntu/server_dist
+
+[Install]
+WantedBy=multi-user.target
