@@ -165,7 +165,7 @@
     db_name: "{{ hostvars.localhost.database.secret.db_name }}"
     db_user: "{{ hostvars.localhost.database.secret.db_user }}"
     db_password: "{{ hostvars.localhost.database.secret.db_password }}"
-    db_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
+    db_host: "{{ hostvars.localhost.trfrm.outputs.servers.value.db_server_ip4 }}"
     api_token: "{{ hostvars.localhost.api.secret.token }}"
   tasks:
     - name: Update apt package cache
@@ -173,7 +173,7 @@
       apt:
         update_cache: yes
 
-    - name: Install python+pip+virtualenv & libgl+zbar
+    - name: Install python+pip+virtualenv & libgl+zbar+libpq
       become: yes
       apt:
         name:
@@ -182,6 +182,7 @@
           - python3-virtualenv
           - libgl1-mesa-glx
           - zbar-tools
+          - libpq-dev
         state: present
 
     - name: Copy api distrib to api host
