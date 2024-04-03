@@ -181,6 +181,10 @@
         src: ../server_dist
         dest: ~/
 
+    - name: Install veirtualenv module
+      ansible.builtin.pip:
+        name: python3-virtualenv
+
     - name: Install requirements
       ansible.builtin.pip:
         chdir: ~
