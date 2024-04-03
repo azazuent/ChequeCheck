@@ -218,11 +218,11 @@
         mode: 0644
 
     - name: Reload daemons and start service
-        ansible.builtin.systemd:
-          daemon_reload: true
-          enabled: true
-          name: cheque_check_server.service
-          state: started
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        name: cheque_check_server.service
+        state: started
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
