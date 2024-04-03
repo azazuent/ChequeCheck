@@ -95,7 +95,7 @@
     - name: Start and enable the service
       ansible.builtin.systemd:
         name: postgresql
-        state: started
+        state: restarted
         enabled: true
 
     - name: Set options
