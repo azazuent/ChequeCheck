@@ -76,9 +76,12 @@
         name: postgresql
         state: restarted
   tasks:
-    - name: Update apt package cache & Install PSQL and Psycopg2
+    - name: Update apt package cache
       apt:
         update_cache: yes
+
+    - name: Install PSQL and Psycopg2
+      apt:
         name:
           - postgresql
           - python3-psycopg2
