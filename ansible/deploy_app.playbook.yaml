@@ -161,13 +161,19 @@
 
 - name: Configure api host
   hosts: api_server
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+    db_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
+    api_token: "{{ hostvars.localhost.api.secret.token }}"
   tasks:
     - name: Update apt package cache
       become: yes
       apt:
         update_cache: yes
 
-    - name: Install python+pip+venv & libgl
+    - name: Install python+pip+virtualenv & libgl+zbar
       become: yes
       apt:
         name:
@@ -175,6 +181,7 @@
           - python3-pip
           - python3-virtualenv
           - libgl1-mesa-glx
+          - zbar-tools
         state: present
 
     - name: Copy api distrib to api host
@@ -182,19 +189,39 @@
         src: ../server_dist
         dest: ~/
 
-    - name: Create virtual environment with requirements
+    - name: Install requirements into venv
       ansible.builtin.pip:
         chdir: ~/
         virtualenv: ./server_venv
-        #virtualenv_site_packages: true
         requirements: ./server_dist/requirements.txt
 
-    - name: Install service
+    - name: Install service into venv
       ansible.builtin.pip:
         chdir: ~/
         virtualenv: ./server_venv
         name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
 
+    - name: Configure service as systemd daemon
+      ansible.builtin.template:
+        src: ./templates/cheque_check_server.service
+        dest: /etc/systemd/system/cheque_check_server.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Add dotenv file to working directory
+        src: ./templates/server.env
+        dest: ~/server_dist/server.env
+        owner: ubuntu
+        group: ubuntu
+        mode: 0644
+
+    - name: Reload daemons and start service
+        ansible.builtin.systemd:
+          daemon_reload: true
+          enabled: true
+          name: cheque_check_server.service
+          state: started
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
