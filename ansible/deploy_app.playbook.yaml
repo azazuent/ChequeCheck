@@ -186,7 +186,7 @@
       ansible.builtin.pip:
         chdir: ~
         virtualenv_command: "python3 -m venv server_venv"
-        vurtualenv_site_packages: true
+        virtualenv_site_packages: true
 
     - name: Install requirements
       ansible.builtin.pip:
