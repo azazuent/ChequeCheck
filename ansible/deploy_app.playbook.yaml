@@ -187,7 +187,6 @@
         chdir: ~
         virtualenv_command: "python3 -m venv server_venv"
         virtualenv_site_packages: true
-        virtualenv: ./server_env
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
