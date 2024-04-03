@@ -24,7 +24,7 @@ class DuplicateEntryError(Exception):
 
 db_connection = psycopg.connect(
     host=os.getenv("db_host"),
-    port=int(os.getenv("db_port")),
+    port=5432,  # int(os.getenv("db_port")),
     user=os.getenv("db_user"),
     password=os.getenv("db_password"),
     dbname=os.getenv("db_name")
