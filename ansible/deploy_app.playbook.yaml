@@ -193,7 +193,7 @@
       ansible.builtin.pip:
         chdir: ~/
         virtualenv: ./server_venv
-        name: ./server-dist/cheque_check_server-1.0-py3-none-any.whl
+        name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
 
 #- name: Wait for api port 22
 #  wait_for:
