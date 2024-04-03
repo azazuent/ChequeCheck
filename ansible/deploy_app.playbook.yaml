@@ -155,9 +155,9 @@
   connection: local
   tasks:
     - name: Wait for api port 22
-    wait_for:
-      host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
-      port: 22
+      wait_for:
+        host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+        port: 22
 
 - name: Configure api host
   hosts: api_server
