@@ -173,7 +173,7 @@
         name:
           - python3
           - python3-pip
-          - python3.10-venv
+          - python3-virtualenv
           - libgl1-mesa-glx
         state: present
 
@@ -185,14 +185,14 @@
     - name: Create virtual environment with requirements
       ansible.builtin.pip:
         chdir: ~/
-        virtualenv_command: "python3 -m venv server_venv"
-        virtualenv_site_packages: true
+        virtualenv: ./server_venv
+        #virtualenv_site_packages: true
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
       ansible.builtin.pip:
         chdir: ~/
-        virtualenv_command: "python3 -m venv server_venv"
+        virtualenv: ./server_venv
         name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
 
 #- name: Wait for api port 22
