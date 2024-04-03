@@ -3,7 +3,7 @@
   tasks:
     - name: Run terraform
       terraform:
-        project_path: "~/terraform-data"
+        project_path: "../terraform"
         force_init: yes
         state: present
       register: trfrm
@@ -12,7 +12,7 @@
       add_host:
         name: tgbot_server
         groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+        ansible_host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4 }}"
         ansible_ssh_private_key_file: ~/.ssh/sung_ar
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
@@ -20,7 +20,7 @@
       add_host:
         name: db_server
         groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.db_server_ip4}}"
+        ansible_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
         ansible_ssh_private_key_file: ~/.ssh/sung_ar
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
@@ -28,33 +28,32 @@
       add_host:
         name: api_server
         groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
+        ansible_host: "{{ trfrm.outputs.servers.value.api_server_ip4 }}"
         ansible_ssh_private_key_file: ~/.ssh/sung_ar
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
 - name: Get secrets from vault
   hosts: localhost
-
   tasks:
-    - name: Get db secrets from vault
-      community.hashi_vault.vault_kv2_get:
-        url: "http://localhost:8200"
-        path: database
-      register: database_secrets
-
     - name: Get bot secrets from vault
       community.hashi_vault.vault_kv2_get:
         url: "http://localhost:8200"
         path: tgbot
-      register: tgbot_secrets
+      register: tgbot
 
     - name: Get api secrets from vault
       community.hashi_vault.vault_kv2_get:
         url: "http://localhost:8200"
         path: api
-      register: api_secrets
+      register: api
 
-- name: Wait out the timeout for creating instances
+    - name: Get db secrets from vault
+      community.hashi_vault.vault_kv2_get:
+        url: "http://localhost:8200"
+        path: database
+      register: database
+
+- name: Wait out the timeout for creating db instance
   hosts: localhost
   connection: local
 
@@ -63,6 +62,84 @@
       wait_for:
         host: "{{ trfrm.outputs.servers.value.db_server_ip4}}"
         port: 22
+
+- name: Configure database host
+  hosts: db_server
+  become: yes
+  handlers:
+    - name: Restart PostgreSQL
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+  tasks:
+    - name: Update apt package cache & Install PSQL and Psycopg2
+      apt:
+        update_cache: yes
+        name:
+          - postgresql
+          - python3-psycopg2
+        state: present
+
+    - name: Configure PostgreSQL
+      ansible.builtin.template:
+        src: ./templates/pg_hba.conf
+        dest: /etc/postgresql/14/main/pg_hba.conf
+        owner: postgres
+        group: postgres
+        mode: 0640
+
+    - name: Start and enable the service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Set options
+      community.postgresql.postgresql_set:
+        name: "listen_addresses"
+        value: "*"
+      become: yes
+      notify:
+        - Restart PostgreSQL
+
+    - name: Create the database
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"
+        encoding: "UTF-8"
+      become: true
+
+    - name: Create database user
+      community.postgresql.postgresql_user:
+        state: present
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+      become: yes
+
+    - name: Grant user access to db
+      community.postgresql.postgresql_privs:
+        type: database
+        database: "{{ db_name }}"
+        roles: "{{ db_user }}"
+        grant_option: no
+        privs: all
+      become: yes
+
+- name: Fill db from backup
+  hosts: localhost
+  community.postgresql_query:
+    login_host: "{{ trfrm.outputs.servers.value.database_server_ip4 }}"
+    db: "{{ db_name }}"
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    path_to_script: "../database_data/cheque_db.psql"
+
+- name: Wait out the timeout for creating instances
+  hosts: localhost
+  connection: local
 
     - name: Wait for tgbot port 22
       wait_for:
@@ -73,51 +150,3 @@
       wait_for:
         host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
         port: 22
-
-- name: Configure database host
-  hosts: db_server
-  become: yes
-  tasks:
-    - name: Update apt package cache
-      apt:
-        update_cache: yes
-
-    - name: Install PostgreSQL
-      apt:
-        name: postgresql
-        state: present
-
-    - name: Configure PostgreSQL
-      ansible.builtin.template:
-        src: ./templates/postgresql.conf
-        dest: /etc/postgresql/14/main/postgresql.conf
-        owner: postgres
-        group: postgres
-        mode: 0644
-
-    - name: Initialize PostgreSQL
-      shell: "postgresql-setup initdb"
-
-    - name: Start and enable services
-      service: "name=postgresql state=started enabled=yes"
-
-    - name: Create database
-      postgresql_db:
-        state: present
-        name: "{{ database_secrets.data.db_name }}"
-
-    - name: Create database user
-      postgresql_user:
-        state: present
-        name: "{{ db_user }}"
-        password: "{{ database_secrets.data.db_password }}"
-
-    - name: Grant user access to db
-      postgresql_privs:
-        type: database
-        database: "{{ database_secrets.data.db_name }}"
-        roles: "{{ database_secrets.data.db_user }}"
-        grant_option: no
-        privs: all
-      become: yes
-      become_user: postgres
