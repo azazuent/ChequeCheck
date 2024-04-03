@@ -137,12 +137,12 @@
     db_password: "{{ hostvars.localhost.database.secret.db_password }}"
   tasks:
     - name: Execute backup script
-      community.postgresql.postgresql_query:
+      community.postgresql.postgresql_script:
         login_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
         db: "{{ db_name }}"
         login_user: "{{ db_user }}"
         login_password: "{{ db_password }}"
-        path_to_script: "../database_data/cheque_db.psql"
+        path: "../database_data/cheque_db.psql"
 
 
 #- name: Wait for tgbot port 22
