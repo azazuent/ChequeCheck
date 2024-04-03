@@ -184,14 +184,14 @@
 
     - name: Create virtual environment with requirements
       ansible.builtin.pip:
-        chdir: ~
+        chdir: ~/
         virtualenv_command: "python3 -m venv server_venv"
         virtualenv_site_packages: true
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
       ansible.builtin.pip:
-        chdir: ~
+        chdir: ~/
         virtualenv: ./server_venv
         name: ./server-dist/cheque_check_server-1.0-py3-none-any.whl
 
