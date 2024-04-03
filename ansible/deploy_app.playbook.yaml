@@ -182,16 +182,12 @@
         src: ../server_dist
         dest: ~/
 
-    - name: Create virtual environment
+    - name: Create virtual environment with requirements
       ansible.builtin.pip:
         chdir: ~
         virtualenv_command: "python3 -m venv server_venv"
         virtualenv_site_packages: true
-
-    - name: Install requirements
-      ansible.builtin.pip:
-        chdir: ~
-        virtualenv: ./server_venv/
+        virtualenv: ./server_env
         requirements: ./server_dist/requirements.txt
 
     - name: Install service
