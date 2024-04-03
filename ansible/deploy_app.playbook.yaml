@@ -192,7 +192,7 @@
     - name: Install service
       ansible.builtin.pip:
         chdir: ~/
-        virtualenv: ./server_venv
+        virtualenv_command: "python3 -m venv server_venv"
         name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
 
 #- name: Wait for api port 22
