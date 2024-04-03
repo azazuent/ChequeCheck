@@ -179,11 +179,15 @@
         src: ../server_dist
         dest: ~/
 
-    - name: Install python libs
+    - name: Install requirements
       ansible.builtin.pip:
         chdir: server_dist
         requirements: ./requirements.txt
-        name: ./*.whl
+
+    - name: Install service
+      ansible.builtin.pip:
+        chdir: server_dist
+        name: cheque_check_server*.whl
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
