@@ -56,7 +56,6 @@
 - name: Wait out the timeout for creating db instance
   hosts: localhost
   connection: local
-
   tasks:
     - name: Wait for db port 22
       wait_for:
@@ -65,16 +64,17 @@
 
 - name: Configure database host
   hosts: db_server
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+
   become: yes
   handlers:
     - name: Restart PostgreSQL
       ansible.builtin.systemd:
         name: postgresql
         state: restarted
-  vars:
-    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
-    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
-    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
   tasks:
     - name: Update apt package cache & Install PSQL and Psycopg2
       apt:
@@ -128,10 +128,17 @@
         privs: all
       become: yes
 
-    - name: Fill db from backup
-      hosts: localhost
-      community.postgresql_query:
-        login_host: "{{ trfrm.outputs.servers.value.database_server_ip4 }}"
+
+- name: Fill db from backup
+  hosts: localhost
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+  tasks:
+    - name: Execute backup script
+      community.postgresql.postgresql_query:
+        login_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
         db: "{{ db_name }}"
         login_user: "{{ db_user }}"
         login_password: "{{ db_password }}"
