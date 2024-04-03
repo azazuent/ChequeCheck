@@ -202,6 +202,7 @@
         name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
 
     - name: Configure service as systemd daemon
+      become: yes
       ansible.builtin.template:
         src: ./templates/cheque_check_server.service
         dest: /etc/systemd/system/cheque_check_server.service
