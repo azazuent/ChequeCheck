@@ -188,7 +188,7 @@
     - name: Install service
       ansible.builtin.pip:
         chdir: server_dist
-        name: cheque_check_server*.whl
+        name: cheque_check_server-1.0-py3-none-any.whl
 #- name: Wait for api port 22
 #  wait_for:
 #    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
