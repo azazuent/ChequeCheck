@@ -1,4 +1,4 @@
-- name: Run local terraform
+- name: Create infrastructure w/ terraform
   hosts: localhost
   tasks:
     - name: Run terraform
@@ -95,3 +95,29 @@
         group: postgres
         mode: 0644
 
+    - name: Initialize PostgreSQL
+      shell: "postgresql-setup initdb"
+
+    - name: Start and enable services
+      service: "name=postgresql state=started enabled=yes"
+
+    - name: Create database
+      postgresql_db:
+        state: present
+        name: "{{ database_secrets.data.db_name }}"
+
+    - name: Create database user
+      postgresql_user:
+        state: present
+        name: "{{ db_user }}"
+        password: "{{ database_secrets.data.db_password }}"
+
+    - name: Grant user access to db
+      postgresql_privs:
+        type: database
+        database: "{{ database_secrets.data.db_name }}"
+        roles: "{{ database_secrets.data.db_user }}"
+        grant_option: no
+        privs: all
+      become: yes
+      become_user: postgres
