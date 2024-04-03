@@ -8,7 +8,7 @@ import json
 from ChequeAPI import get_cheque_info_by_qr, QrCodeNotDetectedException, RickrollException
 import DatabaseAPI
 
-load_dotenv("server.env")
+load_dotenv()
 
 app = Flask(__name__)
 

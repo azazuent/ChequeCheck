@@ -30,6 +30,9 @@ db_connection = psycopg.connect(
     dbname=os.getenv("db_name")
 )
 
+print(os.getenv("db_host"))
+print(os.getenv("db_name"))
+
 
 def insert_user(user_telegram_id: str, user_name: str) -> str:
     cursor = db_connection.cursor()
