@@ -106,11 +106,11 @@
       notify:
         - Restart PostgreSQL
 
-#    - name: Create the database
-#      community.postgresql.postgresql_db:
-#        name: "{{ db_name }}"
-#        encoding: "UTF-8"
-#      become: true
+    - name: Create the database
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"
+        encoding: "UTF-8"
+      become: true
 
     - name: Create database user
       community.postgresql.postgresql_user:
