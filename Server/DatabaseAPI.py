@@ -22,6 +22,9 @@ class DuplicateEntryError(Exception):
         self.existing_entry_id = existing_entry_id
 
 
+print(os.getenv("db_host"))
+print(os.getenv("db_name"))
+
 db_connection = psycopg.connect(
     host=os.getenv("db_host"),
     port=5432,  # int(os.getenv("db_port")),
@@ -29,9 +32,6 @@ db_connection = psycopg.connect(
     password=os.getenv("db_password"),
     dbname=os.getenv("db_name")
 )
-
-print(os.getenv("db_host"))
-print(os.getenv("db_name"))
 
 
 def insert_user(user_telegram_id: str, user_name: str) -> str:
