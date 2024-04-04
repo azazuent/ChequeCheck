@@ -226,7 +226,74 @@
         enabled: true
         name: cheque_check_server.service
         state: restarted
-#- name: Wait for api port 22
-#  wait_for:
-#    host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
-#    port: 22
+
+- name: Wait out the timeout for creating tgbot instance
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Wait for tgbot port 22
+      wait_for:
+        host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
+        port: 22
+
+- name: Configure tgbot host
+  hosts: tgbot_server
+  vars:
+    api_url: "http://{{ hostvars.localhost.trfrm.outputs.servers.value.api_server_ip4 }}:3228/"
+    tg_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
+  tasks:
+    - name: Update apt package cache
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: Install python+pip+virtualenv
+      become: yes
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-virtualenv
+        state: present
+
+    - name: Copy api distrib to api host
+      ansible.builtin.copy:
+        src: ../tgbot_dist
+        dest: ~/
+
+    - name: Install requirements into venv
+      ansible.builtin.pip:
+        chdir: ~/
+        virtualenv: ./tgbot_venv
+        requirements: ./tgbot_dist/requirements.txt
+
+    - name: Install service into venv
+      ansible.builtin.pip:
+        chdir: ~/
+        virtualenv: ./tgbot_venv
+        name: ./tgbot_dist/cheque_check_telegram_bot-1.0-py3-none-any.whl
+
+    - name: Configure service as systemd daemon
+      become: yes
+      ansible.builtin.template:
+        src: ./templates/cheque_check_bot.service
+        dest: /etc/systemd/system/cheque_check_bot.service
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Add dotenv file to user directory
+      ansible.builtin.template:
+        src: ./templates/tgbot.env
+        dest: ~/.env
+        owner: ubuntu
+        group: ubuntu
+        mode: 0644
+
+    - name: Reload daemons and start service
+      become: true
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        name: cheque_check_bot.service
+        state: restarted
