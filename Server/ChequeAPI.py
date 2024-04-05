@@ -1,6 +1,5 @@
 import os
 import requests
-from qreader import QReader
 
 api_url = os.getenv("cheque_api_url")
 api_token = os.getenv("cheque_api_token")
@@ -16,20 +15,12 @@ class RickrollException(Exception):
         super().__init__("RICKROLL DETECTED")
 
 
-def get_cheque_info_by_qr(qrcode) -> str:
-    qreader = QReader()
+def get_cheque_info_by_qr(cheque) -> str:
 
-    qrraw = qreader.detect_and_decode(qrcode)
+    files = {"qrfile": cheque}
 
-    if not qrraw:
-        raise QrCodeNotDetectedException
+    data = {'token': api_token}
 
-    if qrraw[0] == "https://www.youtube.com/watch?v=dQw4w9WgXcQ":
-        print("RICKROLL DETECTED")
-        raise RickrollException
-
-    data = {'token': api_token, 'qrraw': qrraw}
-
-    response = requests.post(url=api_url, data=data)
+    response = requests.post(url=api_url, data=data, files=files)
 
     return response.text

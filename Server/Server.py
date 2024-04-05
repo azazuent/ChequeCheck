@@ -1,9 +1,7 @@
 #from dotenv import find_dotenv, load_dotenv
 #load_dotenv(find_dotenv())
 
-import cv2
 from flask import Flask, request, jsonify
-import numpy as np
 import json
 from ChequeAPI import get_cheque_info_by_qr, QrCodeNotDetectedException, RickrollException
 import DatabaseAPI
@@ -36,12 +34,10 @@ def submit_cheque():
         if user_id is None:
             raise RequestError("Пользователь не зарегистрирован")
 
-        cheque_raw = request.files['cheque_photo'].read()
-        cheque_np_array = np.frombuffer(cheque_raw, np.uint8)
-        cheque_qr = cv2.imdecode(cheque_np_array, cv2.IMREAD_GRAYSCALE)
+        cheque = request.files['cheque_photo']
 
         try:
-            cheque_json = get_cheque_info_by_qr(cheque_qr)
+            cheque_json = get_cheque_info_by_qr(cheque)
             cheque_info = json.loads(cheque_json)
             print(cheque_info)
             code = cheque_info["code"]
