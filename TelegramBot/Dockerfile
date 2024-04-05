@@ -1,11 +1,10 @@
-FROM ubuntu:latest
+FROM python:latest
 
 RUN apt-get update -y
-RUN apt-get install python-pip python-dev
 
-COPY ./ServerAPI.py /app
-COPY ./TelegramBot.py /app
-COPY ./requirements.txt /app
+COPY ./ServerAPI.py /app/
+COPY ./TelegramBot.py /app/
+COPY ./requirements.txt /app/
 
 WORKDIR /app
 
