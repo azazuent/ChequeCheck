@@ -82,5 +82,5 @@
     - name: Run docker-compose
       become: yes
       community.docker.docker_compose:
-        project_src: /home/ubuntu/compose.yaml
+        project_src: /home/ubuntu/
         restarted: true
