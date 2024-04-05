@@ -55,13 +55,14 @@
     cheque_api_token: "{{ hostvars.localhost.api.secret.token }}"
     telegram_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
 
-  become: yes
   tasks:
     - name: Update apt package cache
+      become:yes
       apt:
         update_cache: yes
 
     - name: Install Docker and Docker Compose
+      become: yes
       apt:
         name:
           - docker.io
@@ -79,6 +80,7 @@
         dest: ~/cheque_db.psql
 
     - name: Run docker-compose
+      become: yes
       community.docker.docker_compose:
-        project_src: ~/compose.yaml
+        project_src: /home/ubuntu/compose.yaml
         restarted: true
