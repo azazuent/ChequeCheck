@@ -10,25 +10,9 @@
 
     - name: Add tg host
       add_host:
-        name: tgbot_server
+        name: docker_server
         groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4 }}"
-        ansible_ssh_private_key_file: ~/.ssh/sung_ar
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-
-    - name: Add db host
-      add_host:
-        name: db_server
-        groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
-        ansible_ssh_private_key_file: ~/.ssh/sung_ar
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-
-    - name: Add api host
-      add_host:
-        name: api_server
-        groups: nodes
-        ansible_host: "{{ trfrm.outputs.servers.value.api_server_ip4 }}"
+        ansible_host: "{{ trfrm.outputs.docker.value.docker_server_ip4 }}"
         ansible_ssh_private_key_file: ~/.ssh/sung_ar
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
@@ -53,247 +37,43 @@
         path: database
       register: database
 
-- name: Wait out the timeout for creating db instance
+- name: Wait out the timeout for creating docker instance
   hosts: localhost
   connection: local
   tasks:
     - name: Wait for db port 22
       wait_for:
-        host: "{{ trfrm.outputs.servers.value.db_server_ip4}}"
+        host: "{{ trfrm.outputs.docker.value.docker_server_ip4}}"
         port: 22
 
-- name: Configure database host
+- name: Configure docker host
   hosts: db_server
   vars:
     db_name: "{{ hostvars.localhost.database.secret.db_name }}"
     db_user: "{{ hostvars.localhost.database.secret.db_user }}"
     db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+    cheque_api_token: "{{ hostvars.localhost.api.secret.token }}"
+    telegram_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
 
   become: yes
-  handlers:
-    - name: Restart PostgreSQL
-      ansible.builtin.systemd:
-        name: postgresql
-        state: restarted
   tasks:
     - name: Update apt package cache
       apt:
         update_cache: yes
 
-    - name: Install PSQL and Psycopg2
+    - name: Install Docker and Docker Compose
       apt:
         name:
-          - postgresql
-          - python3-psycopg2
+          - docker.io
+          - docker-compose-plugin
         state: present
 
-    - name: Configure PostgreSQL
+    - name: Transfer docker-compose file
       ansible.builtin.template:
-        src: ./templates/pg_hba.conf
-        dest: /etc/postgresql/14/main/pg_hba.conf
-        owner: postgres
-        group: postgres
-        mode: 0640
+        src: ./templates/compose.yaml.j2
+        dest: ./compose.yaml
 
-    - name: Start and enable the service
-      ansible.builtin.systemd:
-        name: postgresql
-        state: restarted
-        enabled: true
-
-    - name: Set options
-      community.postgresql.postgresql_set:
-        name: "listen_addresses"
-        value: "*"
-      become: yes
-      notify:
-        - Restart PostgreSQL
-
-    - name: Create the database
-      community.postgresql.postgresql_db:
-        name: "{{ db_name }}"
-        encoding: "UTF-8"
-      become: true
-
-    - name: Create database user
-      community.postgresql.postgresql_user:
-        state: present
-        name: "{{ db_user }}"
-        password: "{{ db_password }}"
-      become: yes
-
-    - name: Grant user access to db
-      community.postgresql.postgresql_privs:
-        type: database
-        database: "{{ db_name }}"
-        roles: "{{ db_user }}"
-        grant_option: no
-        privs: all
-      become: yes
-
-
-- name: Fill db from backup
-  hosts: localhost
-  vars:
-    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
-    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
-    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
-  tasks:
-    - name: Execute backup script
-      community.postgresql.postgresql_db:
-        login_host: "{{ trfrm.outputs.servers.value.db_server_ip4 }}"
-        db: "{{ db_name }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        target: "../database_data/cheque_db.psql"
-        state: restore
-
-
-
-- name: Wait out the timeout for creating api instance
-  hosts: localhost
-  connection: local
-  tasks:
-    - name: Wait for api port 22
-      wait_for:
-        host: "{{ trfrm.outputs.servers.value.api_server_ip4}}"
-        port: 22
-
-- name: Configure api host
-  hosts: api_server
-  vars:
-    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
-    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
-    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
-    db_host: "{{ hostvars.localhost.trfrm.outputs.servers.value.db_server_ip4 }}"
-    api_token: "{{ hostvars.localhost.api.secret.token }}"
-  tasks:
-    - name: Update apt package cache
-      become: yes
-      apt:
-        update_cache: yes
-
-    - name: Install python+pip+virtualenv & libgl+zbar+libpq
-      become: yes
-      apt:
-        name:
-          - python3
-          - python3-pip
-          - python3-virtualenv
-          - libgl1-mesa-glx
-          - zbar-tools
-          - libpq-dev
-        state: present
-
-    - name: Copy api distrib to api host
-      ansible.builtin.copy:
-        src: ../server_dist
-        dest: ~/
-
-    - name: Install requirements into venv
-      ansible.builtin.pip:
-        chdir: ~/
-        virtualenv: ./server_venv
-        requirements: ./server_dist/requirements.txt
-
-    - name: Install service into venv
-      ansible.builtin.pip:
-        chdir: ~/
-        virtualenv: ./server_venv
-        name: ./server_dist/cheque_check_server-1.0-py3-none-any.whl
-
-    - name: Configure service as systemd daemon
-      become: yes
+    - name: Transfer sql backup
       ansible.builtin.template:
-        src: ./templates/cheque_check_server.service
-        dest: /etc/systemd/system/cheque_check_server.service
-        owner: root
-        group: root
-        mode: 0644
-
-    - name: Add dotenv file to user directory
-      ansible.builtin.template:
-        src: ./templates/server.env
-        dest: ~/.env
-        owner: ubuntu
-        group: ubuntu
-        mode: 0644
-
-    - name: Reload daemons and start service
-      become: true
-      ansible.builtin.systemd:
-        daemon_reload: true
-        enabled: true
-        name: cheque_check_server.service
-        state: restarted
-
-- name: Wait out the timeout for creating tgbot instance
-  hosts: localhost
-  connection: local
-  tasks:
-    - name: Wait for tgbot port 22
-      wait_for:
-        host: "{{ trfrm.outputs.servers.value.tgbot_server_ip4}}"
-        port: 22
-
-- name: Configure tgbot host
-  hosts: tgbot_server
-  vars:
-    api_url: "http://{{ hostvars.localhost.trfrm.outputs.servers.value.api_server_ip4 }}:3228/"
-    tg_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
-  tasks:
-    - name: Update apt package cache
-      become: yes
-      apt:
-        update_cache: yes
-
-    - name: Install python+pip+virtualenv
-      become: yes
-      apt:
-        name:
-          - python3
-          - python3-pip
-          - python3-virtualenv
-        state: present
-
-    - name: Copy api distrib to api host
-      ansible.builtin.copy:
-        src: ../tgbot_dist
-        dest: ~/
-
-    - name: Install requirements into venv
-      ansible.builtin.pip:
-        chdir: ~/
-        virtualenv: ./tgbot_venv
-        requirements: ./tgbot_dist/requirements.txt
-
-    - name: Install service into venv
-      ansible.builtin.pip:
-        chdir: ~/
-        virtualenv: ./tgbot_venv
-        name: ./tgbot_dist/cheque_check_telegram_bot-1.0-py3-none-any.whl
-
-    - name: Configure service as systemd daemon
-      become: yes
-      ansible.builtin.template:
-        src: ./templates/cheque_check_bot.service
-        dest: /etc/systemd/system/cheque_check_bot.service
-        owner: root
-        group: root
-        mode: 0644
-
-    - name: Add dotenv file to user directory
-      ansible.builtin.template:
-        src: ./templates/tgbot.env
-        dest: ~/.env
-        owner: ubuntu
-        group: ubuntu
-        mode: 0644
-
-    - name: Reload daemons and start service
-      become: true
-      ansible.builtin.systemd:
-        daemon_reload: true
-        enabled: true
-        name: cheque_check_bot.service
-        state: restarted
+        src: ./templates/cheque_db.psql.j2
+        dest: ./cheque_db.psql

@@ -27,7 +27,7 @@ provider "openstack" {
 }
 
 resource "openstack_networking_secgroup_v2" "secgroup" {
-  name        = "cheque_check_sg"
+  name        = "cheque_check_docker_sg"
 }
 
 resource "openstack_networking_secgroup_rule_v2" "secgroup_default_rule" {
@@ -40,32 +40,8 @@ resource "openstack_networking_secgroup_rule_v2" "secgroup_default_rule" {
   security_group_id = openstack_networking_secgroup_v2.secgroup.id
 }
 
-resource "openstack_compute_instance_v2" "cheque_check_tgbot" {
-  name        = "cheque_check_tgbot"
-  image_name  = var.image_name
-  flavor_name = var.flavor_name
-  key_pair = var.key_pair
-  security_groups = [openstack_networking_secgroup_v2.secgroup.name]
-
-  network {
-    name = var.network_name
-  }
-}
-
-resource "openstack_compute_instance_v2" "cheque_check_db" {
-  name        = "cheque_check_db"
-  image_name  = var.image_name
-  flavor_name = var.flavor_name
-  key_pair = var.key_pair
-  security_groups = [openstack_networking_secgroup_v2.secgroup.name]
-
-  network {
-    name = var.network_name
-  }
-}
-
-resource "openstack_compute_instance_v2" "cheque_check_api" {
-  name        = "cheque_check_api"
+resource "openstack_compute_instance_v2" "cheque_check_docker" {
+  name        = "cheque_check_docker"
   image_name  = var.image_name
   flavor_name = var.flavor_name
   key_pair = var.key_pair
