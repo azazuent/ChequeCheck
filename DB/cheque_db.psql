@@ -1,9 +1,14 @@
 --
--- PostgreSQL database dump
+-- {{ db_user }}QL database dump
 --
 
 -- Dumped from database version 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.11 (Ubuntu 14.11-0ubuntu0.22.04.1)
+CREATE DATABASE {{ db_name }};
+\c {{ db_name }};
+CREATE USER {{ db_user }} WITH PASSWORD '{{ db_password }}';
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {{ db_user }};
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {{ db_user }};
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,7 +26,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: cheque; Type: TABLE; Schema: public; Owner: postgres
+-- Name: cheque; Type: TABLE; Schema: public; Owner: {{ db_user }}
 --
 
 CREATE TABLE public.cheque (
@@ -32,10 +37,10 @@ CREATE TABLE public.cheque (
 );
 
 
-ALTER TABLE public.cheque OWNER TO postgres;
+ALTER TABLE public.cheque OWNER TO {{ db_user }};
 
 --
--- Name: cheque_cheque_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: cheque_cheque_id_seq; Type: SEQUENCE; Schema: public; Owner: {{ db_user }}
 --
 
 CREATE SEQUENCE public.cheque_cheque_id_seq
@@ -47,17 +52,17 @@ CREATE SEQUENCE public.cheque_cheque_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.cheque_cheque_id_seq OWNER TO postgres;
+ALTER TABLE public.cheque_cheque_id_seq OWNER TO {{ db_user }};
 
 --
--- Name: cheque_cheque_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: cheque_cheque_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER SEQUENCE public.cheque_cheque_id_seq OWNED BY public.cheque.cheque_id;
 
 
 --
--- Name: user_telegram; Type: TABLE; Schema: public; Owner: postgres
+-- Name: user_telegram; Type: TABLE; Schema: public; Owner: {{ db_user }}
 --
 
 CREATE TABLE public.user_telegram (
@@ -67,10 +72,10 @@ CREATE TABLE public.user_telegram (
 );
 
 
-ALTER TABLE public.user_telegram OWNER TO postgres;
+ALTER TABLE public.user_telegram OWNER TO {{ db_user }};
 
 --
--- Name: user_user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: user_user_id_seq; Type: SEQUENCE; Schema: public; Owner: {{ db_user }}
 --
 
 CREATE SEQUENCE public.user_user_id_seq
@@ -82,31 +87,31 @@ CREATE SEQUENCE public.user_user_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_user_id_seq OWNER TO postgres;
+ALTER TABLE public.user_user_id_seq OWNER TO {{ db_user }};
 
 --
--- Name: user_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: user_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER SEQUENCE public.user_user_id_seq OWNED BY public.user_telegram.user_id;
 
 
 --
--- Name: cheque cheque_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: cheque cheque_id; Type: DEFAULT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.cheque ALTER COLUMN cheque_id SET DEFAULT nextval('public.cheque_cheque_id_seq'::regclass);
 
 
 --
--- Name: user_telegram user_id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: user_telegram user_id; Type: DEFAULT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.user_telegram ALTER COLUMN user_id SET DEFAULT nextval('public.user_user_id_seq'::regclass);
 
 
 --
--- Data for Name: cheque; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: cheque; Type: TABLE DATA; Schema: public; Owner: {{ db_user }}
 --
 
 COPY public.cheque (cheque_id, cheque_fiscal_sign, cheque_json, cheque_user_id) FROM stdin;
@@ -247,7 +252,7 @@ COPY public.cheque (cheque_id, cheque_fiscal_sign, cheque_json, cheque_user_id) 
 
 
 --
--- Data for Name: user_telegram; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: user_telegram; Type: TABLE DATA; Schema: public; Owner: {{ db_user }}
 --
 
 COPY public.user_telegram (user_id, user_telegram_id, user_name) FROM stdin;
@@ -273,21 +278,21 @@ COPY public.user_telegram (user_id, user_telegram_id, user_name) FROM stdin;
 
 
 --
--- Name: cheque_cheque_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: cheque_cheque_id_seq; Type: SEQUENCE SET; Schema: public; Owner: {{ db_user }}
 --
 
 SELECT pg_catalog.setval('public.cheque_cheque_id_seq', 152, true);
 
 
 --
--- Name: user_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+-- Name: user_user_id_seq; Type: SEQUENCE SET; Schema: public; Owner: {{ db_user }}
 --
 
 SELECT pg_catalog.setval('public.user_user_id_seq', 32, true);
 
 
 --
--- Name: cheque cheque_cheque_fiscal_sign_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cheque cheque_cheque_fiscal_sign_key; Type: CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.cheque
@@ -295,7 +300,7 @@ ALTER TABLE ONLY public.cheque
 
 
 --
--- Name: cheque cheque_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cheque cheque_pkey; Type: CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.cheque
@@ -303,7 +308,7 @@ ALTER TABLE ONLY public.cheque
 
 
 --
--- Name: user_telegram user_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_telegram user_pkey; Type: CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.user_telegram
@@ -311,7 +316,7 @@ ALTER TABLE ONLY public.user_telegram
 
 
 --
--- Name: user_telegram user_user_name_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_telegram user_user_name_key; Type: CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.user_telegram
@@ -319,7 +324,7 @@ ALTER TABLE ONLY public.user_telegram
 
 
 --
--- Name: user_telegram user_user_telegram_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: user_telegram user_user_telegram_id_key; Type: CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.user_telegram
@@ -327,7 +332,7 @@ ALTER TABLE ONLY public.user_telegram
 
 
 --
--- Name: cheque cheque_cheque_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: cheque cheque_cheque_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: {{ db_user }}
 --
 
 ALTER TABLE ONLY public.cheque
