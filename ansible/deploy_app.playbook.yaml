@@ -71,14 +71,14 @@
     - name: Transfer docker-compose file
       ansible.builtin.template:
         src: ./templates/compose.yaml.j2
-        dest: ./compose.yaml
+        dest: ~/compose.yaml
 
     - name: Transfer sql backup
       ansible.builtin.template:
         src: ./templates/cheque_db.psql.j2
-        dest: ./cheque_db.psql
+        dest: ~/cheque_db.psql
 
     - name: Run docker-compose
       community.docker.docker_compose:
-        project_src: ./compose.yaml
+        project_src: ~/compose.yaml
         restarted: true
