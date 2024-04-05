@@ -35,4 +35,5 @@ services:
     environment:
       server_api_url: "http://api:3228/"
       telegram_api_token: {{ telegram_api_token }}
-    depends_on: api
+    depends_on: 
+      - api
