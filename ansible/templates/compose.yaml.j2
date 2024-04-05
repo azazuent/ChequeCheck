@@ -14,7 +14,7 @@ services:
       - ./DB/cheque_db.psql:/docker-entrypoint-initdb.d/cheque_db.sql
 
   api:
-    image: 192.168.199.17:5001/cheque_check/server:v1.0
+    image: http://192.168.199.17:5001/cheque_check/server:v1.0
     container_name: api
     ports:
       - "3228:3228"
@@ -28,7 +28,7 @@ services:
       cheque_api_token: {{ cheque_api_token }}
 
   tgbot:
-    image: 192.168.199.17:5001/cheque_check/tgbot:v1.0
+    image: http://192.168.199.17:5001/cheque_check/tgbot:v1.0
     container_name: tgbot
     environment:
       server_api_url: "http://api:3228/"
