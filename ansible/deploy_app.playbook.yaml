@@ -65,7 +65,7 @@
       apt:
         name:
           - docker.io
-          - docker-compose-plugin
+          - docker-compose
         state: present
 
     - name: Transfer docker-compose file
