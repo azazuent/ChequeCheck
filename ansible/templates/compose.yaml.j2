@@ -26,6 +26,8 @@ services:
       db_name: {{ db_name }}
       cheque_api_url: https://proverkacheka.com/api/v1/check/get
       cheque_api_token: {{ cheque_api_token }}
+    depends_on:
+      - database
 
   tgbot:
     image: 192.168.199.17:5001/cheque_check/tgbot:v1.0
@@ -33,3 +35,4 @@ services:
     environment:
       server_api_url: "http://api:3228/"
       telegram_api_token: {{ telegram_api_token }}
+    depend_on: api
