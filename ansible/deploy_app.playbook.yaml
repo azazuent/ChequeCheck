@@ -79,6 +79,22 @@
         src: ./templates/cheque_db.psql.j2
         dest: ~/cheque_db.psql
 
+    - name: Add insecure registries
+      become: yes
+      ansible.builtin.template:
+        src: ./templates/daemon.json
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Restart docker service
+      become: yes
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+        enabled: true
+
     - name: Run docker-compose
       become: yes
       community.docker.docker_compose:
