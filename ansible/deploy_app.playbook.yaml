@@ -80,4 +80,5 @@
 
     - name: Run docker-compose
       community.docker.docker_compose:
-        definition: ./compose.yaml
+        project_src: ./compose.yaml
+        restarted: true
