@@ -57,7 +57,7 @@
 
   tasks:
     - name: Update apt package cache
-      become:yes
+      become: yes
       apt:
         update_cache: yes
 
