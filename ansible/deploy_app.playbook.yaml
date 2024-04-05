@@ -47,7 +47,7 @@
         port: 22
 
 - name: Configure docker host
-  hosts: db_server
+  hosts: docker_server
   vars:
     db_name: "{{ hostvars.localhost.database.secret.db_name }}"
     db_user: "{{ hostvars.localhost.database.secret.db_user }}"
