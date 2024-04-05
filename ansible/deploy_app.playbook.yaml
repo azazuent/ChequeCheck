@@ -77,3 +77,7 @@
       ansible.builtin.template:
         src: ./templates/cheque_db.psql.j2
         dest: ./cheque_db.psql
+
+    - name: Run docker-compose
+      community.docker.docker_compose:
+        definition: ./compose.yaml
