@@ -8,7 +8,7 @@
         state: present
       register: trfrm
 
-    - name: Add tg host
+    - name: Add docker host
       add_host:
         name: docker_server
         groups: nodes
