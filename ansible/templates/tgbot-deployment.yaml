@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: tgbot
+  name: tgbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: tgbot
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: tgbot
+    spec:
+      containers:
+        - env:
+            - name: server_api_url
+              value: http://api:3228/
+            - name: telegram_api_token
+              value: '{{ telegram_api_token }}'
+          image: azazuent/cheque_check:tgbot
+          name: tgbot
+          resources: {}
+      restartPolicy: Always
+status: {}

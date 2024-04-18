@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.26.0 (40646f47)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: api
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: api
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.26.0 (40646f47)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: api
+    spec:
+      containers:
+        - env:
+            - name: cheque_api_token
+              value: '{{ cheque_api_token }}'
+            - name: cheque_api_url
+              value: https://proverkacheka.com/api/v1/check/get
+            - name: db_host
+              value: database
+            - name: db_name
+              value: '{{ db_name }}'
+            - name: db_password
+              value: '{{ db_password }}'
+            - name: db_port
+              value: "5432"
+            - name: db_user
+              value: '{{ db_user }}'
+          image: azazuent/cheque_check:server
+          name: api
+          ports:
+            - containerPort: 3228
+          resources: {}
+      restartPolicy: Always
+status: {}
