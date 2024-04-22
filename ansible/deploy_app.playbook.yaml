@@ -1,10 +1,13 @@
 - name: Add k8s host
-    add_host:
-      name: k8s_server
-      groups: nodes
-      ansible_host: "{{ 192.168.199.216 }}"
-      ansible_ssh_private_key_file: ~/.ssh/k8s
-      ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  hosts: localhost
+  tasks:
+    - name: Add k8s host
+      add_host:
+        name: k8s_server
+        groups: nodes
+        ansible_host: 192.168.199.216
+        ansible_ssh_private_key_file: ~/.ssh/k8s
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
 - name: Get secrets from vault
   hosts: localhost
@@ -33,7 +36,7 @@
   tasks:
     - name: Wait for k8s port 22
       wait_for:
-        host: "{{ 192.168.199.216 }}"
+        host: "192.168.199.216"
         port: 22
 
 - name: Deploy pods
@@ -68,8 +71,13 @@
 
     - name: Transfer database volume file
       ansible.builtin.template:
-        src: ./templates/database-claim0-persistentvolumeclaim.yaml
-        dest: ~/cheque_check/database-claim0-persistentvolumeclaim.yaml
+        src: ./templates/database-volume.yaml
+        dest: ~/cheque_check/database-volume.yaml
+
+    - name: Transfer database volume claim file
+      ansible.builtin.template:
+        src: ./templates/database-pv-claim.yaml
+        dest: ~/cheque_check/database-pv-claim.yaml
 
     - name: Transfer tgbot deployment file
       ansible.builtin.template:
