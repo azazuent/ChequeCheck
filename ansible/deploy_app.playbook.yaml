@@ -1,14 +1,3 @@
-- name: Add k8s host
-  hosts: localhost
-  tasks:
-    - name: Add k8s host
-      add_host:
-        name: k8s_server
-        groups: nodes
-        ansible_host: 192.168.199.216
-        ansible_ssh_private_key_file: ~/.ssh/k8s
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-
 - name: Get secrets from vault
   hosts: localhost
   tasks:
@@ -39,8 +28,8 @@
         host: "192.168.199.216"
         port: 22
 
-- name: Deploy pods
-  hosts: k8s_server
+- name: Deploy database
+  hosts: localhost
   vars:
     db_name: "{{ hostvars.localhost.database.secret.db_name }}"
     db_user: "{{ hostvars.localhost.database.secret.db_user }}"
@@ -49,43 +38,75 @@
     telegram_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
 
   tasks:
-    - name: Transfer api deployment file
-      ansible.builtin.template:
-        src: ./templates/api-deployment.yaml
-        dest: ~/cheque_check/api-deployment.yaml
+    - name: Apply persistent volume
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/database-volume.yaml
 
-    - name: Transfer api service file
-      ansible.builtin.template:
-        src: ./templates/api-service.yaml
-        dest: ~/cheque_check/api-service.yaml
+    - name: Apply persistent volume claim
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/database-pv-claim.yaml
 
-    - name: Transfer database deployment file
-      ansible.builtin.template:
-        src: ./templates/database-deployment.yaml
-        dest: ~/cheque_check/database-deployment.yaml
+    - name: Apply database deployment
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/database-deployment.yaml
 
-    - name: Transfer database service file
-      ansible.builtin.template:
-        src: ./templates/database-service.yaml
-        dest: ~/cheque_check/database-service.yaml
+    - name: Apply database service
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/database-service.yaml
 
-    - name: Transfer database volume file
+- name: Fill db from backup
+  hosts: localhost
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+  tasks:
+    - name: Render backup script template
       ansible.builtin.template:
-        src: ./templates/database-volume.yaml
-        dest: ~/cheque_check/database-volume.yaml
+        src: ./templates/cheque_db.psql
+        dest: ./cheque_db.psql
+    - name: Execute backup script
+      community.postgresql.postgresql_db:
+        login_host: "192.168.199.216"
+        port: 31337
+        db: postgres
+        login_user: postgres
+        login_password: "{{ db_password }}"
+        target: ./cheque_db.psql
+        state: restore
 
-    - name: Transfer database volume claim file
-      ansible.builtin.template:
-        src: ./templates/database-pv-claim.yaml
-        dest: ~/cheque_check/database-pv-claim.yaml
+- name: Deploy services
+  hosts: localhost
+  vars:
+    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+    cheque_api_token: "{{ hostvars.localhost.api.secret.token }}"
+    telegram_api_token: "{{ hostvars.localhost.tgbot.secret.token }}"
 
-    - name: Transfer tgbot deployment file
-      ansible.builtin.template:
-        src: ./templates/tgbot-deployment.yaml
-        dest: ~/cheque_check/tgbot-deployment.yaml
+  tasks:
+    - name: Apply api deployment
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/api-deployment.yaml
 
-    - name: Transfer api service file
-      ansible.builtin.template:
-        src: ./templates/api-service.yaml
-        dest: ~/cheque_check/api-service.yaml
+    - name: Apply api service
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/api-service.yaml
 
+    - name: Apply tgbot deployment
+      kubernetes.core.k8s:
+        apply: true
+        namespace: "sung-ar"
+        template: ./templates/tgbot-deployment.yaml

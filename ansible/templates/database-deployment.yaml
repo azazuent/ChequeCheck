@@ -37,12 +37,9 @@ spec:
           ports:
             - containerPort: 5432
           resources: {}
-          volumeMounts:
-            - mountPath: /docker-entrypoint-initdb.d/cheque_db.sql
-              name: database-claim0
       restartPolicy: Always
       volumes:
-        - name: database-claim0
+        - name: database-pv-claim
           persistentVolumeClaim:
-            claimName: database-claim0
+            claimName: database-pv-claim
 status: {}
