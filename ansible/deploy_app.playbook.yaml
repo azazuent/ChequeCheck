@@ -62,26 +62,26 @@
         namespace: "sung-ar"
         template: ./templates/database-service.yaml
 
-- name: Fill db from backup
-  hosts: localhost
-  vars:
-    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
-    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
-    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
-  tasks:
-    - name: Render backup script template
-      ansible.builtin.template:
-        src: ./templates/cheque_db.psql
-        dest: ./cheque_db.psql
-    - name: Execute backup script
-      community.postgresql.postgresql_db:
-        login_host: "192.168.199.216"
-        port: 31337
-        db: postgres
-        login_user: postgres
-        login_password: "{{ db_password }}"
-        target: ./cheque_db.psql
-        state: restore
+#- name: Fill db from backup
+#  hosts: localhost
+#  vars:
+#    db_name: "{{ hostvars.localhost.database.secret.db_name }}"
+#    db_user: "{{ hostvars.localhost.database.secret.db_user }}"
+#    db_password: "{{ hostvars.localhost.database.secret.db_password }}"
+#  tasks:
+#    - name: Render backup script template
+#      ansible.builtin.template:
+#        src: ./templates/cheque_db.psql
+#        dest: ./cheque_db.psql
+#    - name: Execute backup script
+#      community.postgresql.postgresql_db:
+#        login_host: "192.168.199.216"
+#        port: 31337
+#        db: postgres
+#        login_user: postgres
+#        login_password: "{{ db_password }}"
+#        target: ./cheque_db.psql
+#        state: restore
 
 - name: Deploy services
   hosts: localhost
