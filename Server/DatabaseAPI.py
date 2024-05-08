@@ -10,10 +10,10 @@ GET_USER_ID_BY_TELEGRAM_ID = "SELECT user_id FROM user_telegram WHERE user_teleg
 GET_CHEQUE_ID_BY_FISCAL_SIGN = "SELECT cheque_id FROM cheque WHERE cheque_fiscal_sign = %s"
 GET_USER_LIST = "SELECT * FROM user_telegram"
 GET_CHEQUE_AMOUNT_BY_USER_ID = "SELECT COUNT(*) FROM cheque WHERE cheque_user_id = %s"
-GET_CHEQUES_BY_USER_ID = "SELECT cheque_json FROM cheque WHERE cheque_user_id = %s"
+GET_CHEQUES_BY_USER_ID = "SELECT cheque_json FROM cheque WHERE cheque_user_id = %s LIMIT 10"
 GET_LEADERBOARD = "SELECT U.user_name, COUNT(*) as cheque_amount FROM " \
                   "cheque C INNER JOIN user_telegram U ON C.cheque_user_id = U.user_id " \
-                  "GROUP BY U.user_id ORDER BY cheque_amount LIMIT 10"
+                  "GROUP BY U.user_id ORDER BY cheque_amount DESC LIMIT 10"
 
 
 class DuplicateEntryError(Exception):
